@@ -1,0 +1,29 @@
+/*
+  # Reset all check-ins and guestlists
+
+  1. Changes
+    - Check out all currently checked-in guests
+    - Reset all check-in records
+    - Clear last visit timestamps for members
+
+  2. Operations
+    - Update guests table to set checked_in = false
+    - Update check_ins table to set check_out_time
+    - Reset last_visit in members table
+*/
+
+-- Update all checked-in guests to be checked out
+UPDATE guests
+SET checked_in = false,
+    checked_in_time = NULL
+WHERE checked_in = true;
+
+-- Update all active check-ins to be checked out
+UPDATE check_ins 
+SET check_out_time = now()
+WHERE check_out_time IS NULL;
+
+-- Reset member last_visit timestamps
+UPDATE members
+SET last_visit = NULL
+WHERE last_visit IS NOT NULL;
