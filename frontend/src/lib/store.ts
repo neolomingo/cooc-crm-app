@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 import { Member, Guest, Guestlist } from './supabase';
 
+export type Role = 'reception' | 'manager' | 'admin';
+
 interface AuthState {
   user: {
     id: string;
     email: string;
-    role: 'reception' | 'admin';
+    role: Role;
   } | null;
   isLoading: boolean;
-  setUser: (user: { id: string; email: string; role: 'reception' | 'admin' } | null) => void;
+  setUser: (user: { id: string; email: string; role: Role } | null) => void;
   setLoading: (isLoading: boolean) => void;
 }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -8,17 +8,15 @@ import { supabase } from './lib/supabase';
 function App() {
   const { user, setUser, isLoading, setLoading } = useAuthStore();
   const [supabaseInitialized, setSupabaseInitialized] = useState(false);
-  
+
   useEffect(() => {
     const checkSupabase = async () => {
       try {
-        // Test Supabase connection
-        const { data, error } = await supabase.from('profiles').select('count');
+        const { error } = await supabase.from('profiles').select('id').limit(1);
         if (error) throw error;
         setSupabaseInitialized(true);
       } catch (error) {
         console.error('Supabase connection error:', error);
-        return;
       }
     };
 
@@ -30,19 +28,23 @@ function App() {
 
     const checkUser = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        
-        if (data.session?.user) {
-          // Fetch user role from profiles
+        const { data: sessionData } = await supabase.auth.getSession();
+        const session = sessionData.session;
+
+        if (session?.user) {
           const { data: profileData } = await supabase
             .from('profiles')
             .select('role')
-            .eq('id', data.session.user.id)
+            .eq('id', session.user.id)
             .maybeSingle();
-          
+
+          if (!session.user.email) {
+            throw new Error('User email is missing');
+          }
+
           setUser({
-            id: data.session.user.id,
-            email: data.session.user.email as string,
+            id: session.user.id,
+            email: session.user.email,
             role: profileData?.role || 'reception',
           });
         }
@@ -52,23 +54,25 @@ function App() {
         setLoading(false);
       }
     };
-    
+
     checkUser();
-    
-    // Set up auth listener
+
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          // Fetch user role
           const { data: profileData } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', session.user.id)
             .maybeSingle();
-          
+
+          if (!session.user.email) {
+            throw new Error('User email is missing');
+          }
+
           setUser({
             id: session.user.id,
-            email: session.user.email as string,
+            email: session.user.email,
             role: profileData?.role || 'reception',
           });
         } else if (event === 'SIGNED_OUT') {
@@ -76,33 +80,28 @@ function App() {
         }
       }
     );
-    
+
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, [supabaseInitialized]);
-  
+
   const handleLogout = async () => {
     try {
-      // First check if we have a session
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (session) {
-        // If we have a session, attempt to sign out
         const { error } = await supabase.auth.signOut();
         if (error) {
           console.error('Error during sign out:', error);
           return;
         }
       }
-      
-      // Only clear the local user state after successful sign out or if there was no session
       setUser(null);
     } catch (error) {
       console.error('Error during sign out:', error);
     }
   };
-  
+
   if (!supabaseInitialized) {
     return (
       <div className="min-h-screen bg-background-dark flex items-center justify-center">
@@ -113,7 +112,7 @@ function App() {
       </div>
     );
   }
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background-dark flex items-center justify-center">
@@ -124,7 +123,7 @@ function App() {
       </div>
     );
   }
-  
+
   return (
     <div className="app-container">
       <Toaster
@@ -149,7 +148,6 @@ function App() {
           },
         }}
       />
-      
       <div className="ipad-container">
         {user ? <Dashboard onLogout={handleLogout} /> : <Login />}
       </div>
@@ -158,3 +156,4 @@ function App() {
 }
 
 export default App;
+
