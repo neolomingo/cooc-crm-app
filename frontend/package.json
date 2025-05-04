@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.8",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "date-fns": "^3.6.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
@@ -18,6 +20,7 @@
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.22.3",
     "react-webcam": "^7.2.0",
+    "vite-plugin-pwa": "^1.0.0",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
