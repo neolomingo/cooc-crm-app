@@ -26,6 +26,7 @@ export type Member = {
   last_visit: string | null;
   notes: string | null;
   mailing_list: boolean;
+  photo_url?: string | null;
 };
 
 export type Guest = {
