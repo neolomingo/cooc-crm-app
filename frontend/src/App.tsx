@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { Routes, Route } from 'react-router-dom';
+
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import DailyCheckIns from './pages/DailyCheckIns';
 import { useAuthStore } from './lib/store';
 import { supabase } from './lib/supabase';
 
@@ -38,9 +41,7 @@ function App() {
             .eq('id', session.user.id)
             .maybeSingle();
 
-          if (!session.user.email) {
-            throw new Error('User email is missing');
-          }
+          if (!session.user.email) throw new Error('User email is missing');
 
           setUser({
             id: session.user.id,
@@ -66,9 +67,7 @@ function App() {
             .eq('id', session.user.id)
             .maybeSingle();
 
-          if (!session.user.email) {
-            throw new Error('User email is missing');
-          }
+          if (!session.user.email) throw new Error('User email is missing');
 
           setUser({
             id: session.user.id,
@@ -102,23 +101,14 @@ function App() {
     }
   };
 
-  if (!supabaseInitialized) {
+  if (!supabaseInitialized || isLoading) {
     return (
       <div className="min-h-screen bg-background-dark flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Connecting to database...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
+          <p className="text-gray-400">
+            {supabaseInitialized ? 'Loading...' : 'Connecting to database...'}
+          </p>
         </div>
       </div>
     );
@@ -149,11 +139,21 @@ function App() {
         }}
       />
       <div className="ipad-container">
-        {user ? <Dashboard onLogout={handleLogout} /> : <Login />}
+        <Routes>
+          {!user ? (
+            <Route path="*" element={<Login />} />
+          ) : (
+            <>
+              <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
+              <Route path="/daily-checkins" element={<DailyCheckIns onBack={() => window.history.back()} />} />
+            </>
+          )}
+        </Routes>
       </div>
     </div>
   );
 }
 
 export default App;
+
 

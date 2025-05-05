@@ -69,7 +69,18 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
     setIsCheckingIn(true);
     try {
       const now = new Date().toISOString();
-      await supabase.from('check_ins').insert({ member_id: selectedMember.id, check_in_time: now });
+      await supabase.from('check_ins').insert({
+        member_id: selectedMember.id,
+        check_in_time: now,
+        checked_in_by: 'reception'
+      });
+
+      await supabase.from('daily_check_ins').insert({
+        member_id: selectedMember.id,
+        check_in_time: now,
+        checked_in_by: 'reception'
+      });
+
       const { data: updatedMember, error } = await supabase
         .from('members')
         .update({ last_visit: now })
@@ -116,10 +127,8 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Main Profile Card */}
         <div className="lg:col-span-8">
           <div className="card flex flex-col lg:flex-row overflow-hidden shadow-lg rounded-xl border border-gray-700 bg-background mb-6">
-            {/* Image Section */}
             <div className="w-full lg:w-1/2 bg-black flex items-center justify-center p-6">
               {formData.photo_url ? (
                 <img
@@ -134,7 +143,6 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
               )}
             </div>
 
-            {/* Details Section */}
             <div className="w-full lg:w-1/2 p-8 flex flex-col justify-between">
               <div>
                 <h2 className="text-3xl font-semibold mb-2 text-white">
@@ -176,7 +184,6 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Staff Notes Section */}
           <div className="card p-6 mb-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <FilePenLine size={18} /> Staff Notes
@@ -204,9 +211,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Right Sidebar (Actions & History) */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          {/* Actions */}
           <div className="card p-6">
             <h2 className="text-lg font-semibold mb-4">Actions</h2>
             <Button
@@ -234,7 +239,6 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
             </Button>
           </div>
 
-          {/* Check-in History */}
           <div className="card p-6">
             <h2 className="text-lg font-semibold mb-4">Check-in History</h2>
             <div className="space-y-2 text-sm">
@@ -250,5 +254,6 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
 };
 
 export default MemberDetails;
+
 
 

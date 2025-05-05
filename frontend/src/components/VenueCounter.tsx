@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const VenueCounter: React.FC = () => {
   const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate(); // 👈 Hook to navigate
 
   const fetchCurrentCount = async () => {
     try {
@@ -53,7 +55,12 @@ const VenueCounter: React.FC = () => {
   return (
     <div className="bg-background-elevated rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium text-gray-300">Currently in Venue</h3>
+        <h3
+          onClick={() => navigate('/daily-checkins')}
+          className="text-sm font-medium text-gray-300 hover:underline cursor-pointer"
+        >
+          Currently in Venue
+        </h3>
         <Users size={16} className="text-accent-red" />
       </div>
       <div className="text-2xl font-bold">
