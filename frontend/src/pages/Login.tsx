@@ -24,15 +24,22 @@ const Login: React.FC = () => {
       return;
     }
 
+    if ((selectedRole === 'admin' || selectedRole === 'manager') && !accessCode) {
+      setError('Access code is required for selected role');
+      return;
+    }
+
     if (selectedRole === 'admin' || selectedRole === 'manager') {
       const { data: codeEntry, error: codeError } = await supabase
         .from('access_codes')
         .select('code')
         .eq('role', selectedRole)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (codeError || !codeEntry) {
-        setError('Access code validation failed');
+        setError('Failed to validate access code');
         return;
       }
 
@@ -85,7 +92,7 @@ const Login: React.FC = () => {
 
           setUser({
             id: user.id,
-            email: user.email as string,
+            email: user.email!,
             role: profileData?.role || 'reception',
           });
         }
@@ -128,7 +135,7 @@ const Login: React.FC = () => {
 
         setUser({
           id: data.user.id,
-          email: data.user.email as string,
+          email: data.user.email!,
           role: profileData?.role || 'reception',
         });
       }

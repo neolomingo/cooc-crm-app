@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseUrl } from '../../lib/supabase'; // ✅ Import supabaseUrl
 import Button from '../../components/Button';
 
 const SystemHealthWidget: React.FC = () => {
   const [dbStatus, setDbStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const [apiStatus, setApiStatus] = useState<'online' | 'offline' | 'checking'>('checking');
   const appVersion = 'v1.0.0'; // Replace with dynamic source if needed
-  const schemaVersion = '2025.05.01'; // Static or fetched
+  const schemaVersion = '2025.05.01'; // Replace or fetch dynamically if desired
 
   useEffect(() => {
     const checkDb = async () => {
@@ -20,7 +20,7 @@ const SystemHealthWidget: React.FC = () => {
 
     const checkApi = async () => {
       try {
-        const response = await fetch(`${supabase.url}/rest/v1`, { method: 'OPTIONS' });
+        const response = await fetch(`${supabaseUrl}/rest/v1`, { method: 'OPTIONS' }); // ✅ Fixed here
         setApiStatus(response.ok ? 'online' : 'offline');
       } catch {
         setApiStatus('offline');
@@ -68,3 +68,4 @@ const SystemHealthWidget: React.FC = () => {
 };
 
 export default SystemHealthWidget;
+
