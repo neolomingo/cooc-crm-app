@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Toaster } from 'react-hot-toast';
-import { Routes, Route } from 'react-router-dom';
-
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import DailyCheckIns from './pages/DailyCheckIns';
+import ReceptionLayout from './layouts/ReceptionLayout';
+import ReceptionHome from './pages/reception/ReceptionHome';
+import AddMember from './pages/reception/AddMember';
+import AddWalkIn from './pages/reception/AddWalkIn';
+import MemberDetails from './pages/reception/MemberDetails';
+import CreateGuestlist from './pages/reception/CreateGuestlist';
+import SearchMember from './pages/reception/SearchMember';
+
 import { useAuthStore } from './lib/store';
 import { supabase } from './lib/supabase';
 
@@ -13,147 +17,86 @@ function App() {
   const [supabaseInitialized, setSupabaseInitialized] = useState(false);
 
   useEffect(() => {
-    const checkSupabase = async () => {
+    const init = async () => {
+      console.log('[App] Checking Supabase...');
       try {
-        const { error } = await supabase.from('profiles').select('id').limit(1);
-        if (error) throw error;
-        setSupabaseInitialized(true);
-      } catch (error) {
-        console.error('Supabase connection error:', error);
+        setSupabaseInitialized(true); // Assume working connection for now
+      } catch (err) {
+        console.error('[App] Supabase error:', err);
       }
     };
-
-    checkSupabase();
+    init();
   }, []);
 
   useEffect(() => {
     if (!supabaseInitialized) return;
 
+    console.log('[App] Supabase ready. Checking auth...');
     const checkUser = async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const session = sessionData.session;
 
         if (session?.user) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (!session.user.email) throw new Error('User email is missing');
+          console.log('[App] User found in session:', session.user);
+          const email = session.user.email;
+          if (!email) throw new Error('User email is missing');
 
           setUser({
             id: session.user.id,
-            email: session.user.email,
-            role: profileData?.role || 'reception',
+            email,
+            role: 'reception', // or pull this from Supabase `profiles` if you want
           });
+        } else {
+          console.log('[App] No session user');
         }
-      } catch (error) {
-        console.error('Error checking auth:', error);
+      } catch (err) {
+        console.error('[App] Auth check error:', err);
       } finally {
         setLoading(false);
       }
     };
 
     checkUser();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (!session.user.email) throw new Error('User email is missing');
-
-          setUser({
-            id: session.user.id,
-            email: session.user.email,
-            role: profileData?.role || 'reception',
-          });
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-        }
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
   }, [supabaseInitialized]);
 
-  const handleLogout = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          console.error('Error during sign out:', error);
-          return;
-        }
-      }
-      setUser(null);
-    } catch (error) {
-      console.error('Error during sign out:', error);
-    }
-  };
-
   if (!supabaseInitialized || isLoading) {
+    console.log('[App] Still loading...');
     return (
-      <div className="min-h-screen bg-background-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">
-            {supabaseInitialized ? 'Loading...' : 'Connecting to database...'}
-          </p>
-        </div>
+      <div style={{ color: 'white', textAlign: 'center', paddingTop: '40vh' }}>
+        <p>Loading app...</p>
       </div>
     );
   }
 
   return (
-    <div className="app-container">
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: '#2d2d2d',
-            color: '#fff',
-            border: '1px solid #3a3a3a',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#ffffff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#ffffff',
-            },
-          },
-        }}
-      />
-      <div className="ipad-container">
-        <Routes>
-          {!user ? (
-            <Route path="*" element={<Login />} />
-          ) : (
-            <>
-              <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
-              <Route path="/daily-checkins" element={<DailyCheckIns onBack={() => window.history.back()} />} />
-            </>
-          )}
-        </Routes>
-      </div>
-    </div>
+    <Routes>
+      {!user ? (
+        <Route path="*" element={<Login />} />
+      ) : (
+        <Route path="/reception" element={<ReceptionLayout onLogout={() => setUser(null)} />}>
+          <Route index element={<ReceptionHome />} />
+          <Route path="home" element={<ReceptionHome />} />
+          <Route path="add-member" element={<AddMember />} />
+          <Route path="add-walk-in" element={<AddWalkIn />} />
+          <Route path="member-details" element={<MemberDetails />} />
+          <Route path="create-guestlist" element={<CreateGuestlist />} />
+          <Route path="search-member" element={<SearchMember />} />
+          <Route path="*" element={<Navigate to="/reception" />} />
+        </Route>
+      )}
+    </Routes>
   );
 }
 
 export default App;
+
+
+
+
+
+
+
+
 
 

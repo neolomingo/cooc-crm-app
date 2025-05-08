@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, UserPlus, CalendarClock } from 'lucide-react';
-import Button from '../components/Button';
-import Input from '../components/Input';
-import PhotoCapture from '../components/PhotoCapture';
-import { supabase } from '../lib/supabase';
+import Button from '../../components/Button';
+import Input from '../../components/Input';
+import PhotoCapture from '../../components/PhotoCapture';
+import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
-interface AddMemberProps {
-  onNavigate: (page: string) => void;
-}
+const AddMember: React.FC = () => {
+  const navigate = useNavigate();
 
-const AddMember: React.FC<AddMemberProps> = ({ onNavigate }) => {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -69,7 +68,6 @@ const AddMember: React.FC<AddMemberProps> = ({ onNavigate }) => {
       if (memberPhoto && newMember) {
         const photoPath = `member-photos/${newMember.id}.jpg`;
 
-        // Delete existing if any
         await supabase.storage.from('members').remove([photoPath]);
 
         const { error: uploadError } = await supabase.storage
@@ -147,7 +145,7 @@ const AddMember: React.FC<AddMemberProps> = ({ onNavigate }) => {
         guestlist_date: new Date().toISOString().split('T')[0],
       });
       setMemberPhoto(null);
-      onNavigate('home');
+      navigate('/');
     } catch (err) {
       console.error('Error adding member:', err);
       setError('Failed to add member. Please try again.');
@@ -163,7 +161,7 @@ const AddMember: React.FC<AddMemberProps> = ({ onNavigate }) => {
           <Button
             variant="text"
             leftIcon={<ArrowLeft size={18} />}
-            onClick={() => onNavigate('home')}
+            onClick={() => navigate('/')}
             className="mr-4"
           >
             Back
@@ -278,7 +276,7 @@ const AddMember: React.FC<AddMemberProps> = ({ onNavigate }) => {
             type="button"
             variant="outline"
             size="lg"
-            onClick={() => onNavigate('home')}
+            onClick={() => navigate('/')}
             className="flex-1"
           >
             Cancel
@@ -290,3 +288,4 @@ const AddMember: React.FC<AddMemberProps> = ({ onNavigate }) => {
 };
 
 export default AddMember;
+

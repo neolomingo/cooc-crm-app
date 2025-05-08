@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import Button from '../components/Button';
-import Logo from '../components/Logo';
+import { useNavigate } from 'react-router-dom';
 
-interface Props {
-  onLogout: () => void;
-}
+import Button from '../../components/Button';
+import Logo from '../../components/Logo';
 
-export const ManagerDashboard: React.FC<Props> = ({ onLogout }) => {
+const ManagerCheckins: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<'overview' | 'checkins' | 'feedback' | 'alerts' | 'settings'>('overview');
+  const navigate = useNavigate();
 
   const renderTabContent = () => {
     switch (currentTab) {
@@ -31,13 +30,14 @@ export const ManagerDashboard: React.FC<Props> = ({ onLogout }) => {
       <header className="flex items-center justify-between p-4 border-b border-gray-800">
         <Logo size="small" />
         <nav className="space-x-2">
-        <Button variant="outline" onClick={() => setCurrentTab('checkins')}>Check-Ins</Button>
-<Button variant="outline" onClick={() => setCurrentTab('feedback')}>Feedback</Button>
-<Button variant="outline" onClick={() => setCurrentTab('alerts')}>Alerts</Button>
-<Button variant="outline" onClick={() => setCurrentTab('settings')}>Settings</Button>
-
+          <Button variant="outline" onClick={() => setCurrentTab('checkins')}>Check-Ins</Button>
+          <Button variant="outline" onClick={() => setCurrentTab('feedback')}>Feedback</Button>
+          <Button variant="outline" onClick={() => setCurrentTab('alerts')}>Alerts</Button>
+          <Button variant="outline" onClick={() => setCurrentTab('settings')}>Settings</Button>
         </nav>
-        <Button variant="outline" size="sm" onClick={onLogout}>Logout</Button>
+        <Button variant="outline" size="sm" onClick={() => navigate('/')}>
+          Logout
+        </Button>
       </header>
 
       <main className="flex-1 overflow-y-auto">
@@ -47,4 +47,5 @@ export const ManagerDashboard: React.FC<Props> = ({ onLogout }) => {
   );
 };
 
-export default ManagerDashboard;
+export default ManagerCheckins;
+

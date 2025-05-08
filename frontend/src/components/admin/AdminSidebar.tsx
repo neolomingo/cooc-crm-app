@@ -1,46 +1,46 @@
 import React from 'react';
-import { User, FileText, Activity, Settings, Download, Server } from 'lucide-react';
-import Logo from '../Logo';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import AdminSidebar from '../../components/admin/AdminSidebar';
+import Button from '../../components/Button';
+import { useAuthStore } from '../../lib/store';
 
-interface Props {
-  currentTab: string;
-  onNavigate: (tab: string) => void;
-}
 
-const tabs = [
-  { key: 'users', label: 'Users', icon: User },
-  { key: 'logs', label: 'Logs', icon: FileText },
-  { key: 'activity', label: 'Activity', icon: Activity },
-  { key: 'settings', label: 'Settings', icon: Settings },
-  { key: 'export', label: 'Export', icon: Download },
-  { key: 'health', label: 'System Health', icon: Server },
-];
+const AdminLayout: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { setUser } = useAuthStore();
 
-const AdminSidebar: React.FC<Props> = ({ currentTab, onNavigate }) => {
+  const handleLogout = async () => {
+    setUser(null);
+    navigate('/');
+  };
+
+  const currentTab = location.pathname.split('/')[2] || '';
+  const handleNavigate = (tab: string) => {
+    navigate(`/admin/${tab}`);
+  };
+
   return (
-    <aside className="w-64 bg-background-card border-r border-gray-800 flex flex-col p-4">
-      <div className="mb-8 flex justify-center">
-        <Logo size="medium" />
-      </div>
-
-      <nav className="flex-1 space-y-2">
-        {tabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => onNavigate(key)}
-            className={`flex items-center w-full px-4 py-2 text-left rounded-lg transition-all ${
-              currentTab === key
-                ? 'bg-primary-600 text-white'
-                : 'text-gray-300 hover:bg-background-elevated'
-            }`}
+    <div className="flex h-screen bg-background-dark text-white">
+      <AdminSidebar currentTab={currentTab} onNavigate={handleNavigate} />
+      <main className="flex-1 p-6 overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-xl font-semibold capitalize">{currentTab.replace('-', ' ')}</div>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<LogOut size={16} />}
+            onClick={handleLogout}
           >
-            <Icon className="w-4 h-4 mr-3" />
-            <span>{label}</span>
-          </button>
-        ))}
-      </nav>
-    </aside>
+            Logout
+          </Button>
+        </div>
+        <Outlet />
+      </main>
+    </div>
   );
 };
 
-export default AdminSidebar;
+export default AdminLayout;
+

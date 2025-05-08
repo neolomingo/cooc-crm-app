@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { 
-  UserPlus, Search, CalendarClock, List, Plus, RefreshCw 
+import {
+  UserPlus, Search, CalendarClock, List, Plus, RefreshCw, LogIn
 } from 'lucide-react';
 import Logo from './Logo';
 import Button from './Button';
@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
   const { guestlists, setGuestlists, selectGuestlist } = useGuestlistStore();
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const fetchTodayGuestlists = async () => {
     setIsLoading(true);
     try {
@@ -29,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
         .select('*')
         .eq('date', today)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       setGuestlists(data as Guestlist[]);
     } catch (error) {
@@ -38,36 +38,36 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
       setIsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchTodayGuestlists();
   }, []);
-  
+
   const handleSelectGuestlist = (guestlist: Guestlist) => {
     selectGuestlist(guestlist);
-    onNavigate('viewGuestlist');
+    onNavigate('view-guestlist');
   };
-  
+
   const filteredGuestlists = searchQuery
     ? guestlists.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : guestlists;
-  
+
   return (
     <div className="sidebar">
       <div className="p-4 mb-6">
         <Logo size="medium" />
       </div>
-      
+
       <div className="px-4 mb-6">
         <VenueCounter />
       </div>
-      
+
       <div className="flex-1 px-2">
         <div className="space-y-1 mb-6">
           <button
             className={`w-full flex items-center space-x-3 py-3 px-4 rounded-lg text-left transition-colors ${
-              currentPage === 'home' 
-                ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white' 
+              currentPage === 'home'
+                ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white'
                 : 'text-gray-300 hover:bg-background-elevated'
             }`}
             onClick={() => onNavigate('home')}
@@ -75,43 +75,55 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
             <Search size={18} />
             <span>Search Members</span>
           </button>
-          
+
           <button
             className={`w-full flex items-center space-x-3 py-3 px-4 rounded-lg text-left transition-colors ${
-              currentPage === 'addMember' 
-                ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white' 
+              currentPage === 'add-member'
+                ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white'
                 : 'text-gray-300 hover:bg-background-elevated'
             }`}
-            onClick={() => onNavigate('addMember')}
+            onClick={() => onNavigate('add-member')}
           >
             <UserPlus size={18} />
             <span>Add New Member</span>
           </button>
-          
+
           <button
             className={`w-full flex items-center space-x-3 py-3 px-4 rounded-lg text-left transition-colors ${
-              currentPage === 'createGuestlist' 
-                ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white' 
+              currentPage === 'add-walk-in'
+                ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white'
                 : 'text-gray-300 hover:bg-background-elevated'
             }`}
-            onClick={() => onNavigate('createGuestlist')}
+            onClick={() => onNavigate('add-walk-in')}
+          >
+            <LogIn size={18} />
+            <span>Add Walk-In</span>
+          </button>
+
+          <button
+            className={`w-full flex items-center space-x-3 py-3 px-4 rounded-lg text-left transition-colors ${
+              currentPage === 'create-guestlist'
+                ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white'
+                : 'text-gray-300 hover:bg-background-elevated'
+            }`}
+            onClick={() => onNavigate('create-guestlist')}
           >
             <CalendarClock size={18} />
             <span>Create Guestlist</span>
           </button>
         </div>
-        
+
         <div className="mb-4">
           <div className="flex items-center justify-between px-4 mb-2">
             <h3 className="font-medium text-gray-300">Today's Guestlists</h3>
-            <button 
+            <button
               className="text-gray-400 hover:text-white transition-colors"
               onClick={fetchTodayGuestlists}
             >
               <RefreshCw size={14} className={`${isLoading ? 'animate-spin' : ''}`} />
             </button>
           </div>
-          
+
           <div className="px-4 mb-3">
             <Input
               placeholder="Search guestlists..."
@@ -120,7 +132,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
               size="sm"
             />
           </div>
-          
+
           <div className="space-y-1 max-h-[calc(100vh-400px)] overflow-y-auto px-2">
             {filteredGuestlists.length > 0 ? (
               filteredGuestlists.map((guestlist) => (
@@ -130,13 +142,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
                   onClick={() => handleSelectGuestlist(guestlist)}
                 >
                   <span className="font-medium truncate flex-1">{guestlist.name}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ml-2 ${
-                    guestlist.status === 'active' 
-                      ? 'bg-green-900 text-green-300' 
-                      : guestlist.status === 'completed'
-                      ? 'bg-blue-900 text-blue-300'
-                      : 'bg-gray-800 text-gray-300'
-                  }`}>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ml-2 ${
+                      guestlist.status === 'active'
+                        ? 'bg-green-900 text-green-300'
+                        : guestlist.status === 'completed'
+                        ? 'bg-blue-900 text-blue-300'
+                        : 'bg-gray-800 text-gray-300'
+                    }`}
+                  >
                     {guestlist.status}
                   </span>
                 </button>
@@ -150,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
                   size="sm"
                   leftIcon={<Plus size={16} />}
                   className="mt-2"
-                  onClick={() => onNavigate('createGuestlist')}
+                  onClick={() => onNavigate('create-guestlist')}
                 >
                   Create Guestlist
                 </Button>
@@ -159,7 +173,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
           </div>
         </div>
       </div>
-      
+
       <div className="mt-auto p-4">
         <div className="bg-background-elevated rounded-lg p-4 text-sm">
           <p className="text-gray-300 font-medium mb-1">COOC Members Club</p>
@@ -170,4 +184,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
   );
 };
 
-export default Sidebar
+export default Sidebar;
+
+

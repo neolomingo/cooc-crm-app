@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Edit, Trash, Plus, RotateCw, FilePenLine, Check } from 'lucide-react';
-import Button from '../components/Button';
-import Input from '../components/Input';
-import { supabase, Member, Note } from '../lib/supabase';
-import { useMemberStore } from '../lib/store';
+import { useNavigate } from 'react-router-dom';
+import Button from '../../components/Button';
+import Input from '../../components/Input';
+import { supabase, Member, Note } from '../../lib/supabase';
+import { useMemberStore } from '../../lib/store';
 import { formatDistanceToNow, format } from 'date-fns';
 
-interface MemberDetailsProps {
-  onNavigate: (page: string) => void;
-}
-
-const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
+const MemberDetails: React.FC = () => {
+  const navigate = useNavigate();
   const { selectedMember, selectMember } = useMemberStore();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Member | null>(selectedMember);
@@ -20,11 +18,11 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedMember) {
       loadNotes();
     } else {
-      onNavigate('home');
+      navigate('/');
     }
   }, [selectedMember]);
 
@@ -105,7 +103,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
     return (
       <div className="p-6">
         <div className="flex items-center mb-6">
-          <Button variant="text" leftIcon={<ArrowLeft size={18} />} onClick={() => onNavigate('home')} className="mr-4">
+          <Button variant="text" leftIcon={<ArrowLeft size={18} />} onClick={() => navigate('/')} className="mr-4">
             Back
           </Button>
           <h1 className="text-2xl font-bold">Member not found</h1>
@@ -120,7 +118,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
   return (
     <div className="p-6 h-full overflow-y-auto">
       <div className="flex items-center mb-6">
-        <Button variant="text" leftIcon={<ArrowLeft size={18} />} onClick={() => onNavigate('home')} className="mr-4">
+        <Button variant="text" leftIcon={<ArrowLeft size={18} />} onClick={() => navigate('/')} className="mr-4">
           Back
         </Button>
         <h1 className="text-2xl font-bold">Member Details</h1>
@@ -254,6 +252,7 @@ const MemberDetails: React.FC<MemberDetailsProps> = ({ onNavigate }) => {
 };
 
 export default MemberDetails;
+
 
 
 
