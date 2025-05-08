@@ -8,7 +8,6 @@ import AddWalkIn from './pages/reception/AddWalkIn';
 import MemberDetails from './pages/reception/MemberDetails';
 import CreateGuestlist from './pages/reception/CreateGuestlist';
 import SearchMember from './pages/reception/SearchMember';
-
 import { useAuthStore } from './lib/store';
 import { supabase } from './lib/supabase';
 
@@ -20,7 +19,7 @@ function App() {
     const init = async () => {
       console.log('[App] Checking Supabase...');
       try {
-        setSupabaseInitialized(true); // Assume working connection for now
+        setSupabaseInitialized(true);
       } catch (err) {
         console.error('[App] Supabase error:', err);
       }
@@ -45,7 +44,7 @@ function App() {
           setUser({
             id: session.user.id,
             email,
-            role: 'reception', // or pull this from Supabase `profiles` if you want
+            role: 'reception',
           });
         } else {
           console.log('[App] No session user');
@@ -72,24 +71,31 @@ function App() {
   return (
     <Routes>
       {!user ? (
-        <Route path="*" element={<Login />} />
+        <>
+          <Route path="/" element={<Login />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </>
       ) : (
-        <Route path="/reception" element={<ReceptionLayout onLogout={() => setUser(null)} />}>
-          <Route index element={<ReceptionHome />} />
-          <Route path="home" element={<ReceptionHome />} />
-          <Route path="add-member" element={<AddMember />} />
-          <Route path="add-walk-in" element={<AddWalkIn />} />
-          <Route path="member-details" element={<MemberDetails />} />
-          <Route path="create-guestlist" element={<CreateGuestlist />} />
-          <Route path="search-member" element={<SearchMember />} />
-          <Route path="*" element={<Navigate to="/reception" />} />
-        </Route>
+        <>
+          <Route path="/" element={<Navigate to="/reception" />} />
+          <Route path="/reception" element={<ReceptionLayout onLogout={() => setUser(null)} />}>
+            <Route index element={<ReceptionHome />} />
+            <Route path="home" element={<ReceptionHome />} />
+            <Route path="add-member" element={<AddMember />} />
+            <Route path="add-walk-in" element={<AddWalkIn />} />
+            <Route path="member-details" element={<MemberDetails />} />
+            <Route path="create-guestlist" element={<CreateGuestlist />} />
+            <Route path="search-member" element={<SearchMember />} />
+            <Route path="*" element={<Navigate to="/reception" />} />
+          </Route>
+        </>
       )}
     </Routes>
   );
 }
 
 export default App;
+
 
 
 
