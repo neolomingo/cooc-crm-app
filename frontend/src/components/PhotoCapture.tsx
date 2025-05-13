@@ -1,13 +1,14 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { Camera, RefreshCw } from 'lucide-react';
 import Button from './Button';
 
 interface PhotoCaptureProps {
   onPhotoCapture: (photoBlob: Blob) => void;
+  existingPreview?: string;
 }
 
-const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoCapture }) => {
+const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoCapture, existingPreview }) => {
   const webcamRef = useRef<Webcam>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -18,18 +19,61 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoCapture }) => {
     facingMode: "user"
   };
 
+  useEffect(() => {
+    if (existingPreview && !photo) {
+      setPhoto(existingPreview);
+    }
+  }, [existingPreview]);
+
+  const compressImage = async (file: Blob): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height && width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          } else if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+          }, 'image/jpeg', 0.7);
+        };
+      };
+    });
+  };
+
   const capture = useCallback(() => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
         setPhoto(imageSrc);
-        // Convert base64 to blob
         fetch(imageSrc)
           .then(res => res.blob())
-          .then(blob => onPhotoCapture(blob));
+          .then(async (blob) => {
+            const compressed = await compressImage(blob);
+            onPhotoCapture(compressed);
+          });
       }
     }
-  }, [webcamRef]);
+  }, [webcamRef, onPhotoCapture]);
 
   const retake = () => {
     setPhoto(null);

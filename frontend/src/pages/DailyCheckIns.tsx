@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import Button from '../components/Button';
-
-interface DailyCheckInsProps {
-  onBack: () => void;
-}
 
 interface CheckInEntry {
   id: string;
@@ -18,9 +15,10 @@ interface CheckInEntry {
   };
 }
 
-const DailyCheckIns: React.FC<DailyCheckInsProps> = ({ onBack }) => {
+const DailyCheckIns: React.FC = () => {
   const [entries, setEntries] = useState<CheckInEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchCheckIns = async () => {
     setIsLoading(true);
@@ -40,12 +38,13 @@ const DailyCheckIns: React.FC<DailyCheckInsProps> = ({ onBack }) => {
         )
       `)
       .gte('check_in_time', today.toISOString())
-      .order('check_in_time', { ascending: false });
+      .order('check_in_time', { ascending: false })
+      .returns<CheckInEntry[]>();
 
     if (error) {
       console.error('Error fetching daily check-ins:', error);
     } else {
-      setEntries(data as CheckInEntry[]);
+      setEntries(data || []);
     }
 
     setIsLoading(false);
@@ -58,7 +57,12 @@ const DailyCheckIns: React.FC<DailyCheckInsProps> = ({ onBack }) => {
   return (
     <div className="p-6 h-full overflow-y-auto">
       <div className="flex items-center mb-6">
-        <Button variant="text" leftIcon={<ArrowLeft size={18} />} onClick={onBack} className="mr-4">
+        <Button
+          variant="text"
+          leftIcon={<ArrowLeft size={18} />}
+          onClick={() => navigate('/reception')}
+          className="mr-4"
+        >
           Back
         </Button>
         <h1 className="text-2xl font-bold">Daily Check-Ins</h1>
@@ -108,6 +112,8 @@ const DailyCheckIns: React.FC<DailyCheckInsProps> = ({ onBack }) => {
 };
 
 export default DailyCheckIns;
+
+
 
 
 

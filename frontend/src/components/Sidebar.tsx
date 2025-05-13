@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
-  UserPlus, Search, CalendarClock, List, Plus, RefreshCw, LogIn
+  UserPlus,
+  Search,
+  CalendarClock,
+  List,
+  Plus,
+  RefreshCw,
+  LogIn,
 } from 'lucide-react';
 import Logo from './Logo';
 import Button from './Button';
@@ -12,10 +19,10 @@ import { supabase, Guestlist } from '../lib/supabase';
 
 interface SidebarProps {
   currentPage: string;
-  onNavigate: (page: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage }) => {
+  const navigate = useNavigate();
   const { guestlists, setGuestlists, selectGuestlist } = useGuestlistStore();
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,13 +50,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
     fetchTodayGuestlists();
   }, []);
 
-  const handleSelectGuestlist = (guestlist: Guestlist) => {
-    selectGuestlist(guestlist);
-    onNavigate('view-guestlist');
-  };
-
   const filteredGuestlists = searchQuery
-    ? guestlists.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? guestlists.filter(g =>
+        g.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     : guestlists;
 
   return (
@@ -70,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
                 ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white'
                 : 'text-gray-300 hover:bg-background-elevated'
             }`}
-            onClick={() => onNavigate('home')}
+            onClick={() => navigate('/reception/home')}
           >
             <Search size={18} />
             <span>Search Members</span>
@@ -82,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
                 ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white'
                 : 'text-gray-300 hover:bg-background-elevated'
             }`}
-            onClick={() => onNavigate('add-member')}
+            onClick={() => navigate('/reception/add-member')}
           >
             <UserPlus size={18} />
             <span>Add New Member</span>
@@ -94,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
                 ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white'
                 : 'text-gray-300 hover:bg-background-elevated'
             }`}
-            onClick={() => onNavigate('add-walk-in')}
+            onClick={() => navigate('/reception/add-walk-in')}
           >
             <LogIn size={18} />
             <span>Add Walk-In</span>
@@ -106,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
                 ? 'bg-gradient-to-r from-accent-red to-accent-pink text-white'
                 : 'text-gray-300 hover:bg-background-elevated'
             }`}
-            onClick={() => onNavigate('create-guestlist')}
+            onClick={() => navigate('/reception/create-guestlist')}
           >
             <CalendarClock size={18} />
             <span>Create Guestlist</span>
@@ -129,19 +133,23 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
               placeholder="Search guestlists..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              size="sm"
+              className="input-sm"
             />
           </div>
 
           <div className="space-y-1 max-h-[calc(100vh-400px)] overflow-y-auto px-2">
             {filteredGuestlists.length > 0 ? (
               filteredGuestlists.map((guestlist) => (
-                <button
+                <div
                   key={guestlist.id}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-left text-sm bg-background-elevated hover:bg-gray-800 transition-colors"
-                  onClick={() => handleSelectGuestlist(guestlist)}
                 >
-                  <span className="font-medium truncate flex-1">{guestlist.name}</span>
+                  <Link
+                    to={`/reception/view-guestlist/${guestlist.id}`}
+                    className="font-medium truncate flex-1 hover:underline text-white"
+                  >
+                    {guestlist.name}
+                  </Link>
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ml-2 ${
                       guestlist.status === 'active'
@@ -153,7 +161,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
                   >
                     {guestlist.status}
                   </span>
-                </button>
+                </div>
               ))
             ) : (
               <div className="flex flex-col items-center justify-center py-8 bg-background-elevated rounded-lg text-gray-400 text-sm mx-2">
@@ -164,7 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
                   size="sm"
                   leftIcon={<Plus size={16} />}
                   className="mt-2"
-                  onClick={() => onNavigate('create-guestlist')}
+                  onClick={() => navigate('/reception/create-guestlist')}
                 >
                   Create Guestlist
                 </Button>
@@ -185,5 +193,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
 };
 
 export default Sidebar;
+
+
 
 

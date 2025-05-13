@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { PlusCircle, Search, LogOut } from 'lucide-react';
+import { PlusCircle, Search, LogOut, UserCog, ChevronDown } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Logo from '../components/Logo';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import { useMemberStore } from '../lib/store';
+import { useMemberStore, useAuthStore } from '../lib/store';
 import { supabase, Member } from '../lib/supabase';
 import { debounce } from '../lib/utils';
 
@@ -16,11 +16,35 @@ interface ReceptionLayoutProps {
 const ReceptionLayout: React.FC<ReceptionLayoutProps> = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
-
+  const { user, setUser } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Member[]>([]);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
   const { selectMember } = useMemberStore();
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Auto-logout on tab close
+  useEffect(() => {
+    const handleUnload = async () => {
+      await supabase.auth.signOut();
+      setUser(null);
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [setUser]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchSuggestions = async (searchTerm: string) => {
     if (searchTerm.length < 2) {
@@ -77,21 +101,59 @@ const ReceptionLayout: React.FC<ReceptionLayoutProps> = ({ onLogout }) => {
     navigate('/reception/add-member');
   };
 
+  const initials = user?.email
+    ? user.email.replace('@', ' ').split(/[.\s]/).map((s) => s[0]?.toUpperCase()).join('').slice(0, 2)
+    : '';
+
   const isHome =
     location.pathname === '/reception' || location.pathname === '/reception/home';
-
-  console.log('[ReceptionLayout] Rendering with path:', location.pathname);
 
   return (
     <div className="flex h-screen bg-background-dark text-white">
       <Sidebar
         currentPage={location.pathname.split('/').pop() || ''}
-        onNavigate={(path) => {
-          console.log('[Sidebar] Navigating to:', path);
-          navigate(`/reception/${path}`);
-        }}
+        onNavigate={(path) => navigate(`/reception/${path}`)}
       />
-      <main className="flex-1 overflow-y-auto">
+
+      <main className="flex-1 overflow-y-auto relative">
+        {/* User badge + dropdown */}
+        {user && (
+          <div className="absolute top-4 right-4 z-20" ref={dropdownRef}>
+            <button
+              className="flex items-center gap-2 bg-primary-700 hover:bg-primary-600 text-white px-3 py-1 rounded-full shadow-md transition"
+              onClick={() => setIsDropdownOpen(prev => !prev)}
+            >
+              <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-sm font-bold">
+                {initials}
+              </div>
+              <ChevronDown size={16} />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-44 bg-background-card border border-gray-700 rounded-md shadow-lg py-2 text-sm">
+                <button
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    navigate('/reception/edit-profile');
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-background-elevated flex items-center gap-2"
+                >
+                  <UserCog size={16} /> Edit Profile
+                </button>
+                <button
+                  onClick={onLogout}
+                  className="w-full text-left px-4 py-2 hover:bg-background-elevated flex items-center gap-2 text-red-400"
+                >
+                  <LogOut size={16} /> Log Out
+                </button>
+              </div>
+            )}
+            <div className="text-xs text-gray-400 text-center mt-1 capitalize">
+              {user.role}
+            </div>
+          </div>
+        )}
+
         {isHome ? (
           <div className="flex flex-col items-center justify-center h-full px-4">
             <div className="mb-12">
@@ -110,10 +172,7 @@ const ReceptionLayout: React.FC<ReceptionLayoutProps> = ({ onLogout }) => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
                   />
-                  <PlusCircle
-                    className="add-icon h-5 w-5"
-                    onClick={handleAddNewClick}
-                  />
+                  <PlusCircle className="add-icon h-5 w-5" onClick={handleAddNewClick} />
 
                   {(suggestions.length > 0 || isSuggestionsLoading) && searchQuery.length >= 2 && (
                     <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-background-card border border-gray-800 rounded-lg shadow-xl overflow-hidden">
@@ -141,16 +200,6 @@ const ReceptionLayout: React.FC<ReceptionLayoutProps> = ({ onLogout }) => {
                 </div>
               </form>
             </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<LogOut size={16} />}
-              onClick={onLogout}
-              className="absolute top-4 right-4"
-            >
-              Log Out
-            </Button>
           </div>
         ) : (
           <Outlet />
@@ -161,6 +210,10 @@ const ReceptionLayout: React.FC<ReceptionLayoutProps> = ({ onLogout }) => {
 };
 
 export default ReceptionLayout;
+
+
+
+
 
 
 

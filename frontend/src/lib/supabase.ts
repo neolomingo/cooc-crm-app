@@ -4,7 +4,9 @@ export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Please connect to Supabase using the "Connect to Supabase" button in the top right corner.');
+  throw new Error(
+    'Please connect to Supabase using the "Connect to Supabase" button in the top right corner.'
+  );
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -12,7 +14,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
   },
+  realtime: {
+    params: {
+      eventsPerSecond: 10, // Optional: throttle limit
+    },
+  },
 });
+
+// ---------- Type Definitions ----------
 
 export type Member = {
   id: string;
