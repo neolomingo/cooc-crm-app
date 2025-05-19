@@ -73,17 +73,15 @@ const AddMember: React.FC = () => {
         const { error: uploadError } = await supabase.storage
           .from('members')
           .upload(photoPath, memberPhoto, {
-            contentType: 'image/jpeg',
+            contentType: memberPhoto.type || 'image/jpeg',
           });
 
         if (uploadError) throw uploadError;
 
-        const { error: updateError } = await supabase
+        await supabase
           .from('members')
           .update({ photo_url: photoPath })
           .eq('id', newMember.id);
-
-        if (updateError) throw updateError;
       }
 
       if (formData.add_to_guestlist && newMember) {
@@ -131,8 +129,10 @@ const AddMember: React.FC = () => {
         if (guestError) throw guestError;
       }
 
-      toast.success('Member added successfully!');
+      // ✅ Show success toast
+      toast.success('✅ Member added successfully!');
 
+      // ✅ Reset form after success
       setFormData({
         first_name: '',
         last_name: '',
@@ -145,7 +145,7 @@ const AddMember: React.FC = () => {
         guestlist_date: new Date().toISOString().split('T')[0],
       });
       setMemberPhoto(null);
-      navigate('/');
+
     } catch (err) {
       console.error('Error adding member:', err);
       setError('Failed to add member. Please try again.');
@@ -187,6 +187,33 @@ const AddMember: React.FC = () => {
 
             <div className="mb-6">
               <PhotoCapture onPhotoCapture={handlePhotoCapture} />
+
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Or upload a photo
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      const file = e.target.files[0];
+                      setMemberPhoto(file);
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-accent-pink file:text-white hover:file:opacity-90"
+                />
+              </div>
+
+              {memberPhoto && (
+                <div className="mt-4">
+                  <img
+                    src={URL.createObjectURL(memberPhoto)}
+                    alt="Member Preview"
+                    className="rounded-lg w-32 h-32 object-cover"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -288,4 +315,6 @@ const AddMember: React.FC = () => {
 };
 
 export default AddMember;
+
+
 

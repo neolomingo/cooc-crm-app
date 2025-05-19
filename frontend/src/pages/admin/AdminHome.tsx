@@ -3,11 +3,13 @@ import { LogOut } from 'lucide-react';
 import Logo from '../../components/Logo';
 import Button from '../../components/Button';
 import { useAuthStore } from '../../lib/store';
+import { supabase } from '../../lib/supabase';
 
 const AdminHome: React.FC = () => {
   const { setUser } = useAuthStore();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.clear();
     setUser(null);
   };
@@ -31,3 +33,4 @@ const AdminHome: React.FC = () => {
 };
 
 export default AdminHome;
+

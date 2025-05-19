@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
 import Login from './pages/Login';
+
 import ReceptionLayout from './layouts/ReceptionLayout';
+import AdminLayout from './layouts/AdminLayout';
+import ManagerLayout from './layouts/ManagerLayout';
+
 import ReceptionHome from './pages/reception/ReceptionHome';
 import AddMember from './pages/reception/AddMember';
 import AddWalkIn from './pages/reception/AddWalkIn';
@@ -11,11 +16,21 @@ import SearchMember from './pages/reception/SearchMember';
 import EditProfile from './pages/reception/EditProfile';
 import DailyCheckIns from './pages/DailyCheckIns';
 import EditDetails from './pages/reception/EditDetails';
-import ViewGuestlists from './pages/reception/ViewGuestlists'; 
+import ViewGuestlists from './pages/reception/ViewGuestlists';
 
+import AdminHome from './pages/admin/AdminHome';
+import ManagerHome from './pages/manager/ManagerHome';
 
 import { useAuthStore } from './lib/store';
 import { supabase } from './lib/supabase';
+
+function RouteTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    console.log(`[RouteTracker] Current path: ${location.pathname}`);
+  }, [location.pathname]);
+  return null;
+}
 
 function App() {
   const { user, setUser, isLoading, setLoading } = useAuthStore();
@@ -25,7 +40,6 @@ function App() {
     const init = async () => {
       console.log('[App] Checking Supabase...');
       try {
-        // Simulate or test connection if needed
         setSupabaseInitialized(true);
       } catch (err) {
         console.error('[App] Supabase error:', err);
@@ -37,8 +51,8 @@ function App() {
   useEffect(() => {
     if (!supabaseInitialized) return;
 
-    console.log('[App] Supabase ready. Checking auth...');
     const checkUser = async () => {
+      console.log('[App] Supabase ready. Checking auth...');
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const session = sessionData.session;
@@ -48,10 +62,18 @@ function App() {
           const email = session.user.email;
           if (!email) throw new Error('User email is missing');
 
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError) throw profileError;
+
           setUser({
             id: session.user.id,
             email,
-            role: 'reception', // You can fetch real role from Supabase if needed
+            role: profile?.role || 'reception',
           });
         } else {
           console.log('[App] No session user');
@@ -66,7 +88,6 @@ function App() {
     checkUser();
   }, [supabaseInitialized]);
 
-  // Auto logout when window/tab is closed
   useEffect(() => {
     const handleUnload = async () => {
       try {
@@ -81,8 +102,12 @@ function App() {
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, [setUser]);
 
+  const logoutHandler = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
   if (!supabaseInitialized || isLoading) {
-    console.log('[App] Still loading...');
     return (
       <div style={{ color: 'white', textAlign: 'center', paddingTop: '40vh' }}>
         <p>Loading app...</p>
@@ -91,40 +116,68 @@ function App() {
   }
 
   return (
-    <Routes>
-      {!user ? (
-        <>
-          <Route path="/" element={<Login />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </>
-      ) : (
-        <>
-          <Route path="/" element={<Navigate to="/reception" />} />
-          <Route path="/reception" element={<ReceptionLayout onLogout={async () => {
-            await supabase.auth.signOut();
-            setUser(null);
-          }} />}>
-            <Route index element={<ReceptionHome />} />
-            <Route path="home" element={<ReceptionHome />} />
-            <Route path="add-member" element={<AddMember />} />
-            <Route path="add-walk-in" element={<AddWalkIn />} />
-            <Route path="member-details" element={<MemberDetails />} />
-            <Route path="create-guestlist" element={<CreateGuestlist />} />
-            <Route path="search-member" element={<SearchMember />} />
-            <Route path="edit-profile" element={<EditProfile />} />
-            <Route path="daily-check-ins" element={<DailyCheckIns />} />
-            <Route path="/reception/edit-member/:memberId" element={<EditDetails />} />
-            <Route path="/reception/view-guestlists" element={<ViewGuestlists />} />
-            <Route path="/reception/view-guestlist/:id" element={<ViewGuestlists />} />
-            <Route path="*" element={<Navigate to="/reception" />} />
-          </Route>
-        </>
-      )}
-    </Routes>
+    <>
+      <RouteTracker />
+
+      <Routes>
+        {!user ? (
+          <>
+            <Route path="/" element={<Login />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </>
+        ) : (
+          <>
+            <Route
+              path="/"
+              element={
+                user.role === 'admin' ? <Navigate to="/admin/home" />
+                : user.role === 'manager' ? <Navigate to="/manager/home" />
+                : <Navigate to="/reception/home" />
+              }
+            />
+
+            {user?.role === 'reception' && (
+              <Route path="/reception" element={<ReceptionLayout onLogout={logoutHandler} />}>
+                <Route index element={<ReceptionHome />} />
+                <Route path="home" element={<ReceptionHome />} />
+                <Route path="add-member" element={<AddMember />} />
+                <Route path="add-walk-in" element={<AddWalkIn />} />
+                <Route path="member-details" element={<MemberDetails />} />
+                <Route path="create-guestlist" element={<CreateGuestlist />} />
+                <Route path="search-member" element={<SearchMember />} />
+                <Route path="edit-profile" element={<EditProfile />} />
+                <Route path="daily-check-ins" element={<DailyCheckIns />} />
+                <Route path="edit-member/:memberId" element={<EditDetails />} />
+                <Route path="view-guestlists" element={<ViewGuestlists />} />
+                <Route path="view-guestlist/:id" element={<ViewGuestlists />} />
+                <Route path="*" element={<Navigate to="/reception/home" />} />
+              </Route>
+            )}
+
+            {user?.role === 'manager' && (
+              <Route path="/manager" element={<ManagerLayout onLogout={logoutHandler} />}>
+                <Route path="home" element={<ManagerHome />} />
+                <Route path="*" element={<Navigate to="/manager/home" />} />
+              </Route>
+            )}
+
+            {user?.role === 'admin' && (
+              <Route path="/admin" element={<AdminLayout onLogout={logoutHandler} />}>
+                <Route path="home" element={<AdminHome />} />
+                <Route path="*" element={<Navigate to="/admin/home" />} />
+              </Route>
+            )}
+          </>
+        )}
+      </Routes>
+    </>
   );
 }
 
 export default App;
+
+
+
 
 
 
